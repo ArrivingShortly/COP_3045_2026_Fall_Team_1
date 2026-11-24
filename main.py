@@ -1,76 +1,130 @@
+
+"""Main entry point for the automotive data analysis application."""
+
+from pathlib import Path
+
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import os
 
-print("--- 1. LOADING REAL-WORLD CSV DATASETS ---")
-try:
-    # Load the CSV files you placed in the folder
-    df_specs = pd.read_csv('vehicle_specs.csv')
-    df_sales = pd.read_csv('car_sales.csv')
-    print("Successfully loaded CSV files!")
-except Exception as e:
-    print(f"Error loading files: {e}")
-    exit()
+from automotive_analysis.report import generate_report
 
-print(f"Vehicle Specs columns: {list(df_specs.columns)}")
-print(f"Car Sales columns: {list(df_sales.columns)}")
 
-# Helper function to find a column name regardless of casing/naming variations
-def find_col(df, options):
-    for col in df.columns:
-        if col.lower() in [opt.lower() for opt in options]:
-            return col
-    return None
+def load_data(root: Path) -> pd.DataFrame:
+    """Load and combine vehicle sales and specification datasets."""
+    sales = pd.read_csv(root / "car_sales.csv")
+    specs = pd.read_csv(root / "vehicle_specs.csv")
 
-# Standardize column names if needed based on common Kaggle naming conventions
-price_col = find_col(df_sales, ['SellingPrice', 'Price', 'Selling_Price', 'MSRP'])
-mileage_col = find_col(df_sales, ['Mileage', 'Odometer', 'Kilometers', 'Miles'])
-make_col = find_col(df_sales, ['Make', 'Brand', 'Manufacturer'])
-model_col = find_col(df_sales, ['Model'])
-year_col = find_col(df_sales, ['Year', 'Model_Year'])
+    merged = sales.merge(
+        specs,
+        on=["Make", "Model", "Year"],
+        how="inner",
+        validate="many_to_one",
+    )
 
-print(f"\nDetected columns -> Price: {price_col}, Mileage: {mileage_col}, Make: {make_col}, Model: {model_col}, Year: {year_col}")
+    if merged.empty:
+        raise ValueError("No matching vehicle records were found.")
 
-print("\n--- 2. CLEANING & PREPARING DATA ---")
-# Drop duplicates and fill missing numeric values
-df_sales = df_sales.drop_duplicates()
-for col in df_sales.select_dtypes(include=[np.number]).columns:
-    df_sales[col] = df_sales[col].fillna(df_sales[col].median())
+    return merged
 
-print("\n--- 3. GENERATING VISUALIZATIONS ---")
 
-# Visualization 1: Distribution of Car Prices
-if price_col:
+def prepare_data(data: pd.DataFrame) -> pd.DataFrame:
+    """Perform basic cleaning of the combined dataset."""
+    cleaned = data.drop_duplicates().copy()
+
+    for column in cleaned.select_dtypes(include="number").columns:
+        cleaned[column] = cleaned[column].fillna(
+            cleaned[column].median()
+        )
+
+    return cleaned
+
+
+def generate_visualizations(
+    data: pd.DataFrame, output_dir: Path
+) -> None:
+    """Generate the three automotive analysis visualizations."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Visualization 1: Selling price distribution
     plt.figure(figsize=(8, 5))
-    sns.histplot(df_sales[price_col].dropna(), kde=True, fill=False, color='teal')
-    plt.title('Distribution of Car Prices')
-    plt.xlabel('Price ($)')
-    plt.ylabel('Count')
-    plt.savefig('viz1_selling_price.png')
+    sns.histplot(
+        data["SellingPrice"],
+        kde=True,
+        fill=True,
+        color="teal",
+    )
+    plt.title("Distribution of Car Prices")
+    plt.xlabel("Price ($)")
+    plt.ylabel("Count")
+    plt.tight_layout()
+    plt.savefig(output_dir / "viz1_selling_price.png")
     plt.close()
-    print("Generated: viz1_selling_price.png")
 
-# Visualization 2: Correlation Heatmap
-plt.figure(figsize=(8, 5))
-numeric_df = df_sales.select_dtypes(include=[np.number])
-if not numeric_df.empty:
-    sns.heatmap(numeric_df.corr(), annot=True, cmap='viridis', fmt='.2f')
-    plt.title('Correlation Heatmap')
-    plt.savefig('viz2_correlation.png')
-    plt.close()
-    print("Generated: viz2_correlation.png")
-
-# Visualization 3: Scatter Plot (Mileage vs Price)
-if mileage_col and price_col:
+    # Visualization 2: Correlation heatmap
     plt.figure(figsize=(8, 5))
-    sns.scatterplot(x=mileage_col, y=price_col, data=df_sales, alpha=0.6, hue=year_col)
-    plt.title('Mileage & Price vs. Price')
-    plt.xlabel('Mileage')
-    plt.ylabel('Price ($)')
-    plt.savefig('viz3_mileage_vs_price.png')
+    numeric_data = data.select_dtypes(include="number")
+    sns.heatmap(
+        numeric_data.corr(),
+        annot=True,
+        cmap="Blues",
+        fmt=".2f",
+    )
+    plt.title("Correlation Heatmap")
+    plt.tight_layout()
+    plt.savefig(output_dir / "viz2_correlation.png")
     plt.close()
-    print("Generated: viz3_mileage_vs_price.png")
 
-print("\nSuccess! Data analysis and chart generation complete.")
+    # Visualization 3: Mileage versus selling price
+    plt.figure(figsize=(8, 5))
+    sns.scatterplot(
+        x="Mileage",
+        y="SellingPrice",
+        hue="Year",
+        data=data,
+        alpha=0.6,
+    )
+    plt.title("Mileage vs. Selling Price")
+    plt.xlabel("Mileage")
+    plt.ylabel("Price ($)")
+    plt.tight_layout()
+    plt.savefig(output_dir / "viz3_mileage_vs_price.png")
+    plt.close()
+
+
+def main() -> None:
+    """Coordinate the complete automotive analysis workflow."""
+    root = Path(__file__).resolve().parent
+    output_dir = root / "output"
+
+    try:
+        print("--- 1. LOADING AND MERGING DATASETS ---")
+        data = load_data(root)
+        print(f"Combined records: {len(data):,}")
+
+        print("\n--- 2. PREPARING DATA ---")
+        data = prepare_data(data)
+        print(f"Cleaned records: {len(data):,}")
+
+        print("\n--- 3. GENERATING VISUALIZATIONS ---")
+        generate_visualizations(data, output_dir)
+        print("All three visualizations generated.")
+
+        print("\n--- 4. GENERATING PDF REPORT ---")
+        report_path = generate_report(
+            data=data,
+            chart_dir=output_dir,
+            output_path=(
+                output_dir / "Automotive_Data_Analysis_Report.pdf"
+            ),
+        )
+
+        print(f"\nReport generated: {report_path}")
+        print("Application completed successfully!")
+
+    except (OSError, ValueError, TypeError, KeyError) as error:
+        raise SystemExit(f"Application error: {error}") from error
+
+
+if __name__ == "__main__":
+    main()

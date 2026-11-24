@@ -1,0 +1,12 @@
+# Python cache files
+__pycache__/
+*.pyc
+
+# Generated application output
+output/
+
+# Temporary reporting tests
+Test_Automotive_Report.pdf
+
+# Local editor settings
+.vscode/
