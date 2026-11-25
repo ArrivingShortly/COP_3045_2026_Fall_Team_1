@@ -1,22 +1,19 @@
 ### Data loader
 import pandas as pd
 
-print("--- 1. LOADING REAL-WORLD CSV DATASETS ---")
+def operation(root, dataset1, dataset2):
+    """Load and combine vehicle sales and specification datasets."""
+    sales = pd.read_csv(root / dataset1)
+    specs = pd.read_csv(root / dataset2)
 
-def initalize_data(csv_file):
-    try:
-        # Load the CSV files you placed in the folder
-        result = pd.read_csv(csv_file)
-        print("Successfully loaded CSV file!")
-    except Exception as e:
-        print(f"Error loading files: {e}")
-        exit()
-    print(f"Columns: {list(result.columns)}")
-    return result
+    merged = sales.merge(
+        specs,
+        on=["Make", "Model", "Year"],
+        how="inner",
+        validate="many_to_one",
+    )
 
-# Helper function to find a column name regardless of casing/naming variations
-def find_col(df, options):
-    for col in df.columns:
-        if col.lower() in [opt.lower() for opt in options]:
-            return col
-    return None
+    if merged.empty:
+        raise ValueError("No matching vehicle records were found.")
+
+    return merged

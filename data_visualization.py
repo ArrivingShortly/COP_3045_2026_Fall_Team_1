@@ -2,42 +2,53 @@
 
 import matplotlib.pyplot as plt
 import seaborn as sns
-import numpy as np
 
 
-# Visualization 1: Distribution of Car Prices
-def create_histogram(column, dataset, name, xlab, ylab, export_file):
-    if column:
-        plt.figure(figsize=(8, 5))
-        sns.histplot(dataset[column].dropna(), kde=True, fill=False, color='teal')
-        plt.title(name)
-        plt.xlabel(xlab)
-        plt.ylabel(ylab)
-        plt.savefig(export_file)
-        plt.close()
-        print("Generated: " + export_file)
+def operation(data, output_dir):
+    """Generate the three automotive analysis visualizations."""
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-
-# Visualization 2: Correlation Heatmap
-def create_correlation_heatmap(dataset, name, export_file):
+    # Visualization 1: Selling price distribution
     plt.figure(figsize=(8, 5))
-    numeric_df = dataset.select_dtypes(include=[np.number])
-    if not numeric_df.empty:
-        sns.heatmap(numeric_df.corr(), annot=True, cmap='viridis', fmt='.2f')
-        plt.title(name)
-        plt.savefig(export_file)
-        plt.close()
-        print("Generated: " + export_file)
+    sns.histplot(
+        data["SellingPrice"],
+        kde=True,
+        fill=True,
+        color="teal",
+    )
+    plt.title("Distribution of Car Prices")
+    plt.xlabel("Price ($)")
+    plt.ylabel("Count")
+    plt.tight_layout()
+    plt.savefig(output_dir / "viz1_selling_price.png")
+    plt.close()
 
+    # Visualization 2: Correlation heatmap
+    plt.figure(figsize=(8, 5))
+    numeric_data = data.select_dtypes(include="number")
+    sns.heatmap(
+        numeric_data.corr(),
+        annot=True,
+        cmap="Blues",
+        fmt=".2f",
+    )
+    plt.title("Correlation Heatmap")
+    plt.tight_layout()
+    plt.savefig(output_dir / "viz2_correlation.png")
+    plt.close()
 
-# Visualization 3: Scatter Plot (Mileage vs Price)
-def create_scatterplot(column1, column2, column3, dataset, name, xlab, ylab, export_file):
-    if column1 and column2:
-        plt.figure(figsize=(8, 5))
-        sns.scatterplot(x=column1, y=column2, data=dataset, alpha=0.6, hue=column3)
-        plt.title(name)
-        plt.xlabel(xlab)
-        plt.ylabel(ylab)
-        plt.savefig(export_file)
-        plt.close()
-        print("Generated: viz3_mileage_vs_price.png")
+    # Visualization 3: Mileage versus selling price
+    plt.figure(figsize=(8, 5))
+    sns.scatterplot(
+        x="Mileage",
+        y="SellingPrice",
+        hue="Year",
+        data=data,
+        alpha=0.6,
+    )
+    plt.title("Mileage vs. Selling Price")
+    plt.xlabel("Mileage")
+    plt.ylabel("Price ($)")
+    plt.tight_layout()
+    plt.savefig(output_dir / "viz3_mileage_vs_price.png")
+    plt.close()

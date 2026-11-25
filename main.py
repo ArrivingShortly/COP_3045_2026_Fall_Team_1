@@ -1,38 +1,129 @@
-import os
+
+"""Main entry point for the automotive data analysis application."""
+
+from pathlib import Path
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 import data_loader
 import data_cleaner
 import data_visualization
 
+from automotive_analysis.report import generate_report
+
+#def load_data(root: Path, dataset1="car_sales.csv", dataset2="vehicle_specs.csv"):
+#    """Load and combine vehicle sales and specification datasets."""
+#    sales = pd.read_csv(root / dataset1)
+#    specs = pd.read_csv(root / dataset2)
+#
+#    merged = sales.merge(
+#        specs,
+#        on=["Make", "Model", "Year"],
+#        how="inner",
+#        validate="many_to_one",
+#    )
+#
+#    if merged.empty:
+#        raise ValueError("No matching vehicle records were found.")
+#
+#    return merged
+
+#def prepare_data(data: pd.DataFrame):
+#    """Perform basic cleaning of the combined dataset."""
+#    cleaned = data.drop_duplicates().copy()
+#
+#    for column in cleaned.select_dtypes(include="number").columns:
+#        cleaned[column] = cleaned[column].fillna(
+#            cleaned[column].median()
+#        )
+#
+#    return cleaned
+
+#def generate_visualizations(data: pd.DataFrame, output_dir: Path):
+#    """Generate the three automotive analysis visualizations."""
+#    output_dir.mkdir(parents=True, exist_ok=True)
+#
+    # Visualization 1: Selling price distribution
+#    plt.figure(figsize=(8, 5))
+#    sns.histplot(
+#        data["SellingPrice"],
+#        kde=True,
+#        fill=True,
+#        color="teal",
+#    )
+#    plt.title("Distribution of Car Prices")
+#    plt.xlabel("Price ($)")
+#    plt.ylabel("Count")
+#    plt.tight_layout()
+#    plt.savefig(output_dir / "viz1_selling_price.png")
+#    plt.close()
+
+    # Visualization 2: Correlation heatmap
+#    plt.figure(figsize=(8, 5))
+#    numeric_data = data.select_dtypes(include="number")
+#    sns.heatmap(
+#        numeric_data.corr(),
+#        annot=True,
+#        cmap="Blues",
+#        fmt=".2f",
+#    )
+#    plt.title("Correlation Heatmap")
+#    plt.tight_layout()
+#    plt.savefig(output_dir / "viz2_correlation.png")
+#    plt.close()
+
+    # Visualization 3: Mileage versus selling price
+#    plt.figure(figsize=(8, 5))
+#    sns.scatterplot(
+#        x="Mileage",
+#        y="SellingPrice",
+#        hue="Year",
+#        data=data,
+#        alpha=0.6,
+#    )
+#    plt.title("Mileage vs. Selling Price")
+#    plt.xlabel("Mileage")
+#    plt.ylabel("Price ($)")
+#    plt.tight_layout()
+#    plt.savefig(output_dir / "viz3_mileage_vs_price.png")
+#    plt.close()
 
 
-print("--- 1. LOADING REAL-WORLD CSV DATASETS ---")
-# Verifies files and assigns datasets
-df_specs = data_loader.initalize_data('vehicle_specs.csv')
-df_sales = data_loader.initalize_data('car_sales.csv')
+def main():
+    """Coordinate the complete automotive analysis workflow."""
+    root = Path(__file__).resolve().parent
+    output_dir = root / "output"
 
-# Standardize column names if needed based on common Kaggle naming conventions
-price_col = data_loader.find_col(df_sales, ['SellingPrice', 'Price', 'Selling_Price', 'MSRP'])
-mileage_col = data_loader.find_col(df_sales, ['Mileage', 'Odometer', 'Kilometers', 'Miles'])
-make_col = data_loader.find_col(df_sales, ['Make', 'Brand', 'Manufacturer'])
-model_col = data_loader.find_col(df_sales, ['Model'])
-year_col = data_loader.find_col(df_sales, ['Year', 'Model_Year'])
+    try:
+        print("--- 1. LOADING AND MERGING DATASETS ---")
+        data = data_loader.operation(Path, "car_sales.csv", "vehicle_specs.csv")
+        print(f"Combined records: {len(data):,}")
 
-print(f"\nDetected columns -> Price: {price_col}, Mileage: {mileage_col}, Make: {make_col}, Model: {model_col}, Year: {year_col}")
+        print("\n--- 2. PREPARING DATA ---")
+        data = data_cleaner.operation(pd.DataFrame)
+        print(f"Cleaned records: {len(data):,}")
+
+        print("\n--- 3. GENERATING VISUALIZATIONS ---")
+        data_visualization.operation(pd.DataFrame, Path)
+        print("All three visualizations generated.")
+
+        print("\n--- 4. GENERATING PDF REPORT ---")
+        report_path = generate_report(
+            data=data,
+            chart_dir=output_dir,
+            output_path=(
+                output_dir / "Automotive_Data_Analysis_Report.pdf"
+            ),
+        )
+
+        print(f"\nReport generated: {report_path}")
+        print("Application completed successfully!")
+
+    except (OSError, ValueError, TypeError, KeyError) as error:
+        raise SystemExit(f"Application error: {error}") from error
 
 
-
-print("\n--- 2. CLEANING & PREPARING DATA ---")
-# Drop duplicates and fill missing numeric values
-df_sales = data_cleaner.overall_operation(df_sales)
-
-
-
-print("\n--- 3. GENERATING VISUALIZATIONS ---")
-# Creates a histogram, correlation heatmap and scatterplot
-data_visualization.create_histogram(price_col, df_sales, 'Distribution of Car Prices u', 'Price ($)', 'Count', 'viz1_selling_price.png')
-data_visualization.create_correlation_heatmap(df_sales, 'Correlation Heatmap u', 'viz2_correlation.png')
-data_visualization.create_scatterplot(mileage_col, price_col, year_col, df_sales, 'Mileage & Year vs. Price u', 'Mileage', 'Price ($)', 'viz3_mileage_vs_price.png')
-
-
-print("\nSuccess! Data analysis and chart generation complete.")
+if __name__ == "__main__":
+    main()
