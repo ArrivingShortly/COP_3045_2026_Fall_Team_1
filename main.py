@@ -1,16 +1,22 @@
 data_loader.py
+data_cleaner.py
 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+
 import data_loader
+import data_cleaner
+
 
 
 print("--- 1. LOADING REAL-WORLD CSV DATASETS ---")
+# Verifies files
 data_loader.verify_files()
 
+# Assigns namesakes for the datasets
 df_specs = pd.read_csv('vehicle_specs.csv')
 df_sales = pd.read_csv('car_sales.csv')
 
@@ -27,9 +33,7 @@ print(f"\nDetected columns -> Price: {price_col}, Mileage: {mileage_col}, Make: 
 
 print("\n--- 2. CLEANING & PREPARING DATA ---")
 # Drop duplicates and fill missing numeric values
-df_sales = df_sales.drop_duplicates()
-for col in df_sales.select_dtypes(include=[np.number]).columns:
-    df_sales[col] = df_sales[col].fillna(df_sales[col].median())
+df_sales = data_cleaner.overall_operation(df_sales)
 
 print("\n--- 3. GENERATING VISUALIZATIONS ---")
 
