@@ -3,18 +3,16 @@ import pandas as pd
 
 print("--- 1. LOADING REAL-WORLD CSV DATASETS ---")
 
-def verify_files():
+def initalize_data(csv_file):
     try:
         # Load the CSV files you placed in the folder
-        df_specs = pd.read_csv('vehicle_specs.csv')
-        df_sales = pd.read_csv('car_sales.csv')
-        print("Successfully loaded CSV files!")
+        result = pd.read_csv(csv_file)
+        print("Successfully loaded CSV file!")
     except Exception as e:
         print(f"Error loading files: {e}")
         exit()
-    print(f"Vehicle Specs columns: {list(df_specs.columns)}")
-    print(f"Car Sales columns: {list(df_sales.columns)}")
-    return None
+    print(f"Columns: {list(result.columns)}")
+    return result
 
 # Helper function to find a column name regardless of casing/naming variations
 def find_col(df, options):
