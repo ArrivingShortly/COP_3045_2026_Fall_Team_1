@@ -1,5 +1,6 @@
 ### Data cleaner
 
+
 def operation(data):
     """Perform basic cleaning of the combined dataset."""
     cleaned = data.drop_duplicates().copy()

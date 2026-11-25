@@ -4,8 +4,8 @@
 from pathlib import Path
 
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
+#import matplotlib.pyplot as plt
+#import seaborn as sns
 
 import data_loader
 import data_cleaner
@@ -98,15 +98,15 @@ def main():
 
     try:
         print("--- 1. LOADING AND MERGING DATASETS ---")
-        data = data_loader.operation(Path, "car_sales.csv", "vehicle_specs.csv")
+        data = data_loader.operation(root, "car_sales.csv", "vehicle_specs.csv")
         print(f"Combined records: {len(data):,}")
 
         print("\n--- 2. PREPARING DATA ---")
-        data = data_cleaner.operation(pd.DataFrame)
+        data = data_cleaner.operation(data)
         print(f"Cleaned records: {len(data):,}")
-
+        
         print("\n--- 3. GENERATING VISUALIZATIONS ---")
-        data_visualization.operation(pd.DataFrame, Path)
+        data_visualization.operation(data, output_dir)
         print("All three visualizations generated.")
 
         print("\n--- 4. GENERATING PDF REPORT ---")

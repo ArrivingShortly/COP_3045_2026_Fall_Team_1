@@ -1,6 +1,7 @@
 ### Data loader
 import pandas as pd
 
+
 def operation(root, dataset1, dataset2):
     """Load and combine vehicle sales and specification datasets."""
     sales = pd.read_csv(root / dataset1)
