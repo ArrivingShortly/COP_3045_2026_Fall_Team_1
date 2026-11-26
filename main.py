@@ -14,11 +14,11 @@ def main():
 
     try:
         print("--- 1. LOADING AND MERGING DATASETS ---")
-        data = process.load_procedure()
+        data = process.load_procedure
         print(f"Combined records: {len(data):,}")
 
         print("\n--- 2. PREPARING DATA ---")
-        data = process.clean_procedure()
+        data = process.clean_procedure
         print(f"Cleaned records: {len(data):,}")
 
         print("\n--- 3. GENERATING VISUALIZATIONS ---")
