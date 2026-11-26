@@ -13,10 +13,12 @@ class DataConfiguration:
     def load_procedure(self):
         root = Path(__file__).resolve().parent
         self.load = data_loader.operation(Path(root), "car_sales.csv", "vehicle_specs.csv", "Make", "Model", "Year")
+        return self.load
 
     @property
     def clean_procedure(self):
         self.clean = data_cleaner.operation(self.load)
+        return self.clean
 
     def visualize_procedure(self):
         root = Path(__file__).resolve().parent
