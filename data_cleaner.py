@@ -3,7 +3,7 @@
 import pandas as pd
 
 
-def operation(data: pd.DataFrame) -> pd.DataFrame:
+def operation(data):
     """Clean duplicates, normalize text fields, and impute numeric missing values."""
     # Validate that input is a non-empty DataFrame
     if not isinstance(data, pd.DataFrame):
